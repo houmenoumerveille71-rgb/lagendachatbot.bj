@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Agenda.bj - Assistant Intelligent</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- STYLES --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: #121212; color: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        
+        .chatbot-container {
+            width: 100%; max-width: 650px; background-color: #1e1e1e; border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); overflow: hidden;
+            display: flex; flex-direction: column; height: 88vh; border: 1px solid #333;
+        }
+
+        /* Header */
+        .chat-header {
+            background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+            color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .status { display: flex; align-items: center; gap: 8px; font-size: 12px; background-color: rgba(255, 255, 255, 0.15); padding: 4px 12px; border-radius: 20px; }
+        .status-indicator { width: 7px; height: 7px; background-color: #4cff4c; border-radius: 50%; box-shadow: 0 0 5px #4cff4c; }
+
+        /* Messages Area */
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; background-color: #121212; display: flex; flex-direction: column; gap: 15px; }
+        .message { display: flex; max-width: 85%; animation: fadeIn 0.3s ease-out; }
+        .user-message { align-self: flex-end; flex-direction: row-reverse; }
+        .bot-message { align-self: flex-start; }
+
+        .message-content { padding: 12px 16px; border-radius: 15px; font-size: 14px; line-height: 1.5; word-wrap: break-word; }
+        .user-message .message-content { background-color: #d32f2f; color: white; border-bottom-right-radius: 2px; }
+        .bot-message .message-content { background-color: #2d2d2d; color: #ffffff; border: 1px solid #383838; border-bottom-left-radius: 2px; }
+
+        .message-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 10px; flex-shrink: 0; background-color: #d32f2f; font-size: 13px; }
+        .message-time { font-size: 10px; color: #777; margin-top: 4px; padding: 0 5px; }
+
+        /* Images & Links */
+        .event-img { width: 100%; max-height: 250px; object-fit: cover; border-radius: 10px; margin: 10px 0; border: 1px solid #444; }
+        .message-content a { color: #ff8a8a; font-weight: bold; text-decoration: none; border-bottom: 1px dashed #ff8a8a; }
+
+        /* Input Zone */
+        .chat-input-container { padding: 15px 20px; border-top: 1px solid #333; background-color: #1e1e1e; }
+        .chat-input-wrapper { display: flex; align-items: center; background-color: #2d2d2d; border-radius: 25px; padding: 5px 5px 5px 18px; border: 1px solid #444; }
+        #user-input { flex: 1; border: none; background: transparent; padding: 10px 5px; font-size: 14px; color: #ffffff; outline: none; }
+        .send-button { background: #d32f2f; color: white; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; transition: 0.2s; }
+        .send-button:hover { transform: scale(1.05); background: #b71c1c; }
+
+        .input-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; justify-content: center; }
+        .action-chip { background-color: #2d2d2d; color: #ff8a8a; padding: 6px 14px; border-radius: 15px; font-size: 12px; cursor: pointer; border: 1px solid #444; }
+        .action-chip:hover { background-color: #d32f2f; color: white; }
+
+        /* Typing Indicator */
+        .typing-indicator { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background-color: #2d2d2d; border-radius: 15px; border-bottom-left-radius: 2px; border: 1px solid #383838; }
+        .typing-dots { display: flex; gap: 4px; }
+        .typing-dot { width: 6px; height: 6px; background-color: #d32f2f; border-radius: 50%; animation: typingBounce 1.4s infinite ease-in-out; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-8px); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div class="chatbot-container">
+    <div class="chat-header">
+        <div class="chat-title">
+            <div class="status"><div class="status-indicator"></div><span>En ligne</span></div>
+            <h1>Agenda.bj Assistant</h1>
+        </div>
+        <div class="header-actions">
+            <i class="fas fa-trash" id="clear-btn" style="cursor:pointer; opacity: 0.8;" title="Effacer la conversation" onclick="clearChat()"></i>
+        </div>
+    </div>
+
+    <div class="chat-messages" id="chat">
+        <div class="message bot-message">
+            <div class="message-avatar"><i class="fas fa-robot"></i></div>
+            <div>
+                <div class="message-content">Bonjour ! Je suis votre assistant Agenda.bj. Je me souviens de nos échanges pour mieux vous aider. Que cherchez-vous au Bénin ?</div>
+                <div class="message-time" id="initial-time"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-input-container">
+        <div class="chat-input-wrapper">
+            <input type="text" id="user-input" placeholder="Ex: Concerts à Cotonou ce week-end..." autocomplete="off">
+            <button class="send-button" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+        <div class="input-actions">
+            <div class="action-chip" onclick="quickMsg('Quels sont les événements ce week-end ?')">📅 Ce week-end</div>
+            <div class="action-chip" onclick="quickMsg('Quoi de neuf à Cotonou ?')">📍 Cotonou</div>
+            <div class="action-chip" onclick="quickMsg('Festivals culturels')">🎭 Culture</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let conversationHistory = []; // MÉMOIRE DU CHAT
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const now = new Date();
+        document.getElementById('initial-time').textContent = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        
+        // Permettre d'envoyer avec la touche Entrée
+        document.getElementById('user-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    });
+
+    function formatMarkdown(text) {
+        if (!text) return "";
+        return text
+            .replace(/!\[.*?\]\((.*?)\)/g, '<img src="$1" class="event-img" onerror="this.style.display=\'none\'">')
+            .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n/g, '<br>');
+    }
+
+    function appendMessage(text, type) {
+        const chatBox = document.getElementById('chat');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${type === 'user' ? 'user-message' : 'bot-message'}`;
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        msgDiv.innerHTML = `
+            <div class="message-avatar"><i class="fas ${type === 'user' ? 'fa-user' : 'fa-robot'}"></i></div>
+            <div>
+                <div class="message-content">${formatMarkdown(text)}</div>
+                <div class="message-time">${time}</div>
+            </div>
+        `;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function showTypingIndicator() {
+        const chatBox = document.getElementById('chat');
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message bot-message';
+        typingDiv.id = 'typing-indicator';
+        typingDiv.innerHTML = `
+            <div class="message-avatar"><i class="fas fa-robot"></i></div>
+            <div class="typing-indicator">
+                <div class="typing-dots">
+                    <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+                </div>
+            </div>
+        `;
+        chatBox.appendChild(typingDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+        const indicator = document.getElementById('typing-indicator');
+        if (indicator) indicator.remove();
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('user-input');
+        const message = input.value.trim();
+        if (!message) return;
+
+        appendMessage(message, 'user');
+        input.value = '';
+        showTypingIndicator();
+
+        try {
+            const response = await fetch("/chat/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    message: message, 
+                    history: conversationHistory 
+                })
+            });
+
+            const data = await response.json();
+            removeTypingIndicator();
+            appendMessage(data.reply, 'bot');
+            
+            // Mise à jour de la mémoire avec la réponse du serveur
+            conversationHistory = data.history;
+
+        } catch (e) {
+            removeTypingIndicator();
+            appendMessage("Désolé, j'ai un problème de connexion. Réessayez plus tard.", 'bot');
+            console.error(e);
+        }
+    }
+
+    function quickMsg(text) {
+        document.getElementById('user-input').value = text;
+        sendMessage();
+    }
+
+    function clearChat() {
+        if (confirm("Voulez-vous effacer l'historique de cette discussion ?")) {
+            document.getElementById('chat').innerHTML = `
+                <div class="message bot-message">
+                    <div class="message-avatar"><i class="fas fa-robot"></i></div>
+                    <div class="message-content">Historique effacé. Comment puis-je vous aider à nouveau ?</div>
+                </div>`;
+            conversationHistory = []; // On vide la mémoire
+        }
+    }
+</script>
+
+</body>
+</html>
