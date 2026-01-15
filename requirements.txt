@@ -6,3 +6,5 @@ google-generativeai
 httpx
 slowapi
 cachetools
+jinja2
+pydantic
