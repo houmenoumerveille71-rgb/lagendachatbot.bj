@@ -1,3 +1,4 @@
+#FORMATTER.PY
 import re
 
 month_full = {
@@ -60,6 +61,56 @@ def format_date_short(start, end):
     end_str = end.strftime('%d %b %Y')
     return f"📅 Du {translate_months(start_str, month_abbr)} au {translate_months(end_str, month_abbr)}"
 
+def format_price(event):
+    """Formate le prix de l'événement."""
+    if event.get("is_free"):
+        return "🆓 Gratuit"
+    
+    price = event.get("price", 0)
+    if price and price > 0:
+        return f"💰 {int(price):,} FCFA".replace(",", " ")
+    
+    return ""
+
+def format_category(category):
+    """Formate la catégorie avec un emoji approprié."""
+    if not category:
+        return ""
+    
+    category_emojis = {
+        "musique": "🎵",
+        "concert": "🎤",
+        "festival": "🎪",
+        "sport": "⚽",
+        "football": "⚽",
+        "basketball": "🏀",
+        "culture": "🎭",
+        "théâtre": "🎭",
+        "danse": "💃",
+        "cinéma": "🎬",
+        "exposition": "🖼️",
+        "art": "🎨",
+        "conférence": "🎤",
+        "formation": "📚",
+        "business": "💼",
+        "soirée": "🌙",
+        "gastronomie": "🍽️",
+        "famille": "👨‍👩‍👧‍👦",
+        "enfants": "👶",
+        "bien-être": "🧘",
+        "religion": "🙏",
+        "mode": "👗"
+    }
+    
+    cat_lower = category.lower()
+    emoji = "🏷️"
+    for key, em in category_emojis.items():
+        if key in cat_lower:
+            emoji = em
+            break
+    
+    return f"{emoji} {category.capitalize()}"
+
 def format_events(events):
     """Transforme les dictionnaires d'événements en messages élégants."""
     if not events:
@@ -73,6 +124,8 @@ def format_events(events):
         city = e.get("city") or "Bénin"
         link = e.get("link") or "https://lagenda.bj"
         img = e.get("image")
+        category = e.get("category")
+        venue = e.get("venue_name", "")
         
         # 2. Description courte (max 120 caractères pour le mobile)
         desc = clean_html(e.get("description", ""))
@@ -81,7 +134,26 @@ def format_events(events):
         # 3. Construction du bloc Markdown
         # On met le titre en gras et en lien
         block = f"⭐ **[{title}]({link})**\n"
-        block += f"📍 {city} | {format_date_short(e.get('date_start'), e.get('date_end'))}\n"
+        
+        # Ligne lieu et date
+        location_parts = [city]
+        if venue and venue != city:
+            location_parts.append(venue)
+        block += f"📍 {' - '.join(location_parts)} | {format_date_short(e.get('date_start'), e.get('date_end'))}\n"
+        
+        # Ligne catégorie et prix
+        meta_parts = []
+        if category:
+            cat_formatted = format_category(category)
+            if cat_formatted:
+                meta_parts.append(cat_formatted)
+        
+        price_formatted = format_price(e)
+        if price_formatted:
+            meta_parts.append(price_formatted)
+        
+        if meta_parts:
+            block += f"{' | '.join(meta_parts)}\n"
         
         # 4. Image (Syntaxe Markdown gérée par ton JS)
         if img:

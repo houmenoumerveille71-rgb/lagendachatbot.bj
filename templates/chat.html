@@ -115,9 +115,19 @@
     function formatMarkdown(text) {
         if (!text) return "";
         return text
+            // Images
             .replace(/!\[.*?\]\((.*?)\)/g, '<img src="$1" class="event-img" onerror="this.style.display=\'none\'">')
+            // Liens
             .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
+            // Gras
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            // Italique avec underscore
+            .replace(/_(.*?)_/g, '<em>$1</em>')
+            // Italique avec astérisque simple
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            // Séparateurs
+            .replace(/---/g, '<hr style="border: none; border-top: 1px solid #444; margin: 15px 0;">')
+            // Retours à la ligne
             .replace(/\n/g, '<br>');
     }
 

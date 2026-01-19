@@ -1,3 +1,5 @@
+
+#MAIN.PY
 import logging
 import os
 from pathlib import Path
@@ -52,20 +54,37 @@ async def chat(request: Request, req: ChatRequest): # 'request' ajouté ici pour
         reply = ai_data.get("ai_reply", "Je traite votre demande...")
         intent = ai_data.get("intent")
         filters = ai_data.get("filters", {})
+        
+        # Log des filtres extraits pour debug
+        logger.info(f"Filtres extraits: {filters}")
 
         # 2. LOGIQUE DE RECHERCHE
         if intent == "search":
             all_events = await search_events()
             search_filters = filters if filters else {}
             filtered = filter_events(all_events, search_filters)
+            
+            # Log du nombre de résultats
+            logger.info(f"Événements trouvés: {len(filtered)} sur {len(all_events)}")
 
             if not filtered:
-                city_name = search_filters.get('city') if search_filters.get('city') else "tout le Bénin"
-                reply = f"{reply}\n\n📍 *Note :* Je n'ai trouvé aucun événement pour **{city_name}**."
+                # Message contextuel selon les filtres utilisés
+                context_parts = []
+                if search_filters.get('city'):
+                    context_parts.append(f"à **{search_filters['city']}**")
+                if search_filters.get('category'):
+                    context_parts.append(f"dans la catégorie **{search_filters['category']}**")
+                if search_filters.get('search_query'):
+                    context_parts.append(f"pour **{search_filters['search_query']}**")
+                if search_filters.get('is_free'):
+                    context_parts.append("**gratuits**")
+                
+                context_str = " ".join(context_parts) if context_parts else "correspondant à vos critères"
+                reply = f"{reply}\n\n📍 *Note :* Je n'ai trouvé aucun événement {context_str}. Essayez d'élargir votre recherche !"
             else:
                 # --- LOGIQUE DE LIMITE DYNAMIQUE ---
                 msg_lower = req.message.lower()
-                keywords_all = ["tout", "tous", "liste", "énumère", "disponible"]
+                keywords_all = ["tout", "tous", "liste", "énumère", "disponible", "complet", "entier"]
                 
                 # On affiche 20 résultats si l'utilisateur veut "tout", sinon 5
                 limit = 20 if any(word in msg_lower for word in keywords_all) else 5
