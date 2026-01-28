@@ -54,6 +54,16 @@
        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
        @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-8px); opacity: 1; } }
        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+       /* Custom Modal */
+       .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+       .modal-content { background-color: #1e1e1e; margin: 15% auto; padding: 20px; border: 1px solid #333; width: 80%; max-width: 400px; border-radius: 16px; text-align: center; color: #ffffff; }
+       .modal-content p { margin-bottom: 20px; }
+       .modal-buttons { display: flex; justify-content: center; gap: 10px; }
+       .modal-button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+       .modal-button.yes { background-color: #B3212E; color: white; }
+       .modal-button.yes:hover { background-color: #961b26; }
+       .modal-button.no { background-color: #2d2d2d; color: #ffffff; border: 1px solid #444; }
+       .modal-button.no:hover { background-color: #444; }
 </style>
 </head>
 <body>
@@ -71,7 +81,7 @@
 <div class="message bot-message">
 <div class="message-avatar"><i class="fas fa-robot"></i></div>
 <div>
-<div class="message-content">Bonjour. Je suis ton assistant Lagenda. Dis-moi ce que tu cherches comme événement, je m'occupe du reste.</div>
+<div class="message-content">  Bonjour. Je suis ton assistant Lagenda. Dis-moi ce que tu cherches comme événement, je m'occupe du reste.</div>
 <div class="message-time" id="initial-time"></div>
 </div>
 </div>
@@ -87,6 +97,15 @@
 <div class="action-chip" onclick="quickMsg('Festivals culturels')">🎭 Culture</div>
 </div>
 </div>
+</div>
+<div id="confirm-modal" class="modal">
+    <div class="modal-content">
+        <p>Voulez-vous effacer l'historique de cette discussion ?</p>
+        <div class="modal-buttons">
+            <button class="modal-button yes" onclick="confirmClear(true)">Oui</button>
+            <button class="modal-button no" onclick="confirmClear(false)">Non</button>
+        </div>
+    </div>
 </div>
 <script>
    let conversationHistory = [];
@@ -174,7 +193,11 @@ typingDiv.id = 'typing-indicator';
        sendMessage();
    }
    function clearChat() {
-       if (confirm("Voulez-vous effacer l'historique de cette discussion ?")) {
+       document.getElementById('confirm-modal').style.display = 'block';
+   }
+   function confirmClear(confirmed) {
+       document.getElementById('confirm-modal').style.display = 'none';
+       if (confirmed) {
            document.getElementById('chat').innerHTML = `
 <div class="message bot-message">
 <div class="message-avatar"><i class="fas fa-robot"></i></div>
